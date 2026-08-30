@@ -25,8 +25,10 @@ are maintained in [the cross-platform parity contract](docs/CROSS_PLATFORM_PARIT
 - Applies Windows' saved internal-only, external-only, extended, or duplicated
   display topology.
 - Remains available in the Windows notification area when its window is closed.
-- Writes structured JSON Lines troubleshooting logs under
+- Writes identifier-redacted JSON Lines troubleshooting logs under
   `%LOCALAPPDATA%\eGPUBridge\logs`.
+- Exports a bounded, redacted JSON support report containing the current display
+  snapshot and recent structured events.
 - Runs without administrator privileges.
 
 ## Safety boundary
@@ -95,7 +97,7 @@ using it. Safe removal is not part of this starter.
 2. Add exact PCI/device identity and connection/removal event logging.
 3. Add saved per-setup profiles with verified post-switch state and rollback.
 4. Detect running games and require confirmation before disruptive changes.
-5. Add a redacted support-report export and remote troubleshooting instructions.
+5. Add remote troubleshooting instructions and supervised capture tooling.
 6. Consider opt-in automatic switching only after manual switching is reliable.
 
 ## Project layout

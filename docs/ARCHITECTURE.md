@@ -32,7 +32,14 @@ The UI does not call native functions directly. This boundary allows a fake
 
 `AppLogger` writes one JSON object per line under
 `%LOCALAPPDATA%\eGPUBridge\logs`. Each topology request records the request,
-native result, and a subsequent display snapshot.
+native result, and a subsequent display snapshot. `DiagnosticRedactor` walks the
+serialized JSON values before they reach disk and removes the local user profile,
+user and machine names, IPv4/IPv6 addresses, MAC addresses, and unique monitor
+instance segments while retaining useful PCI vendor/device/subsystem identity.
+
+`SupportReportService` captures the current display snapshot plus at most 500
+recent entries from the three newest log files. It applies redaction again and
+writes a shareable JSON report under `%LOCALAPPDATA%\eGPUBridge\support`.
 
 ## Current limitations
 

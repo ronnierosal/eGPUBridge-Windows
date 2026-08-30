@@ -21,7 +21,8 @@ public partial class App : System.Windows.Application
         });
 
         var displayService = new WindowsDisplayService(_logger);
-        _mainWindow = new MainWindow(displayService, _logger);
+        var supportReportService = new SupportReportService(_logger, displayService);
+        _mainWindow = new MainWindow(displayService, _logger, supportReportService);
         _trayIcon = new TrayIconService();
         _trayIcon.ShowRequested += ShowMainWindow;
         _trayIcon.ExitRequested += ExitApplication;
