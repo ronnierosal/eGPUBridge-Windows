@@ -7,6 +7,11 @@ internal static class NativeMethods
     internal const uint QdcOnlyActivePaths = 0x00000002;
     internal const uint QdcVirtualModeAware = 0x00000010;
     internal const uint DisplayConfigDeviceInfoGetTargetName = 2;
+    internal const uint DisplayConfigDeviceInfoGetAdapterName = 4;
+
+    internal const uint CmGetIdListFilterPresent = 0x00000100;
+    internal const uint CmGetIdListFilterClass = 0x00000200;
+    internal const uint CmGetDeviceInterfaceListPresent = 0x00000000;
 
     internal const uint SdcTopologyInternal = 0x00000001;
     internal const uint SdcTopologyClone = 0x00000002;
@@ -19,6 +24,8 @@ internal static class NativeMethods
 
     internal const int ErrorSuccess = 0;
     internal const int ErrorInsufficientBuffer = 122;
+    internal const uint CrSuccess = 0x00000000;
+    internal const uint CrBufferSmall = 0x0000001A;
 
     [DllImport("user32.dll")]
     internal static extern int GetDisplayConfigBufferSizes(
@@ -37,6 +44,37 @@ internal static class NativeMethods
 
     [DllImport("user32.dll")]
     internal static extern int DisplayConfigGetDeviceInfo(ref DisplayConfigTargetDeviceName requestPacket);
+
+    [DllImport("user32.dll")]
+    internal static extern int DisplayConfigGetDeviceInfo(ref DisplayConfigAdapterName requestPacket);
+
+    [DllImport("CfgMgr32.dll", EntryPoint = "CM_Get_Device_ID_List_SizeW", ExactSpelling = true, CharSet = CharSet.Unicode)]
+    internal static extern uint CM_Get_Device_ID_List_Size(
+        out uint bufferLength,
+        string? filter,
+        uint flags);
+
+    [DllImport("CfgMgr32.dll", EntryPoint = "CM_Get_Device_ID_ListW", ExactSpelling = true, CharSet = CharSet.Unicode)]
+    internal static extern uint CM_Get_Device_ID_List(
+        string? filter,
+        [Out] char[] buffer,
+        uint bufferLength,
+        uint flags);
+
+    [DllImport("CfgMgr32.dll", EntryPoint = "CM_Get_Device_Interface_List_SizeW", ExactSpelling = true, CharSet = CharSet.Unicode)]
+    internal static extern uint CM_Get_Device_Interface_List_Size(
+        out uint bufferLength,
+        ref Guid interfaceClassGuid,
+        string? deviceInstanceId,
+        uint flags);
+
+    [DllImport("CfgMgr32.dll", EntryPoint = "CM_Get_Device_Interface_ListW", ExactSpelling = true, CharSet = CharSet.Unicode)]
+    internal static extern uint CM_Get_Device_Interface_List(
+        ref Guid interfaceClassGuid,
+        string? deviceInstanceId,
+        [Out] char[] buffer,
+        uint bufferLength,
+        uint flags);
 
     [DllImport("user32.dll")]
     internal static extern int SetDisplayConfig(
@@ -198,6 +236,15 @@ internal static class NativeMethods
 
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
         internal string MonitorDevicePath;
+    }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    internal struct DisplayConfigAdapterName
+    {
+        internal DisplayConfigDeviceInfoHeader Header;
+
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
+        internal string AdapterDevicePath;
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]

@@ -12,13 +12,21 @@ public sealed class WindowsDisplayService(AppLogger logger) : IDisplayService
         var displays = paths.Select(CreateDisplayTarget).ToArray();
         var adapters = EnumerateAdapters();
         var topology = DetermineTopology(paths, displays);
-        var snapshot = new DisplaySnapshot(DateTimeOffset.UtcNow, topology, displays, adapters);
+        var hardwareIdentity = new HardwareIdentityService(logger).Capture(
+            paths.Select(path => path.TargetInfo.AdapterId));
+        var snapshot = new DisplaySnapshot(
+            DateTimeOffset.UtcNow,
+            topology,
+            displays,
+            adapters,
+            hardwareIdentity);
 
         logger.Info("display.snapshot", "Captured active Windows display configuration.", new
         {
             topology = topology.ToString(),
             displays,
-            adapters
+            adapters,
+            hardwareIdentity
         });
 
         return snapshot;
