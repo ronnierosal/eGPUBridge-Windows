@@ -1,0 +1,110 @@
+# eGPUBridge for Windows
+
+eGPUBridge is an early Windows companion for handheld PCs connected to an external
+GPU and television. The initial target setup is a ROG Ally X with a GPD G1.
+
+This project is separate from the SteamOS Decky plugin. Windows uses its own display
+configuration and device-notification APIs, so the Linux Gamescope, DRM, sysfs, and
+systemd implementation is not portable.
+
+## Related projects
+
+- [Original eGPUBridge SteamOS/Decky plugin](https://github.com/WowOne987/eGPUBridge)
+- [Ronnie's eGPUBridge SteamOS fork](https://github.com/ronnierosal/eGPUBridge)
+
+The two applications share the goal of making external-GPU display switching safer
+and easier, but each platform has an independent implementation and release cycle.
+
+## Current starter functionality
+
+- Enumerates active Windows display paths and monitor names.
+- Lists Windows display adapters without changing them.
+- Identifies internal versus external display connections.
+- Applies Windows' saved internal-only, external-only, extended, or duplicated
+  display topology.
+- Remains available in the Windows notification area when its window is closed.
+- Writes structured JSON Lines troubleshooting logs under
+  `%LOCALAPPDATA%\eGPUBridge\logs`.
+- Runs without administrator privileges.
+
+## Safety boundary
+
+This starter changes Windows display topology only. It does **not**:
+
+- install or remove graphics drivers;
+- disable or forcibly remove a GPU;
+- change clocks, voltage, power limits, or fan control;
+- claim that a secondary adapter is definitely the GPD G1;
+- implement safe physical eGPU disconnection.
+
+Adapter identity is currently informational. Exact GPD G1 identity and topology
+validation must be added before any device-specific or privileged operation.
+
+## Build
+
+Requirements:
+
+- Windows 10 version 2004 or newer, or Windows 11
+- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
+
+```powershell
+dotnet restore .\eGPUBridge-Windows.sln
+dotnet build .\eGPUBridge-Windows.sln --configuration Release
+dotnet test .\eGPUBridge-Windows.sln --configuration Release
+dotnet run --project .\src\eGPUBridge.App\eGPUBridge.App.csproj
+```
+
+GitHub Actions also restores, builds, and tests every pull request and push to a
+`codex/**` branch.
+
+## Public release and signing policy
+
+Public Windows releases are intentionally unsigned. Windows Defender SmartScreen may
+therefore identify a downloaded installer or executable as coming from an unknown
+publisher. That warning does not by itself prove that a file is malicious, but users
+should only download releases from this repository's GitHub Releases page.
+
+Each public release should include SHA-256 checksums so users can verify that their
+download matches the artifact published by this project. The repository will never
+ask users to install a personal signing certificate or disable Windows security
+features. No public release should be published until the documented ROG Ally X and
+GPD G1 hardware checks pass.
+
+## Testing on the ROG Ally X
+
+The first hardware pass should be deliberately small:
+
+1. Start the application with the GPD G1 disconnected and capture the Displays and
+   Graphics adapters tabs.
+2. Connect the GPD G1 and TV, wait for Windows and the AMD driver to finish device
+   discovery, then press **Refresh**.
+3. Confirm the TV appears as HDMI or DisplayPort and the Ally panel appears as an
+   internal or embedded DisplayPort connection.
+4. Try **Extend** before trying **External only**.
+5. Use **Internal only** to return to the Ally screen.
+6. Open the Support tab and preserve the log file for review.
+
+Do not physically disconnect the GPD G1 while a game or application may still be
+using it. Safe removal is not part of this starter.
+
+## Planned milestones
+
+1. Validate display enumeration and topology switching on the ROG Ally X + GPD G1.
+2. Add exact PCI/device identity and connection/removal event logging.
+3. Add saved per-setup profiles with verified post-switch state and rollback.
+4. Detect running games and require confirmation before disruptive changes.
+5. Add a redacted support-report export and remote troubleshooting instructions.
+6. Consider opt-in automatic switching only after manual switching is reliable.
+
+## Project layout
+
+```text
+src/eGPUBridge.App/          WPF tray application and Windows API integration
+tests/eGPUBridge.App.Tests/  Hardware-independent unit tests
+.github/workflows/ci.yml     Windows build and test verification
+```
+
+## Status
+
+Early development foundation. Hardware validation is required before publishing a
+release.

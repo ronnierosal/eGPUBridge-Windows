@@ -1,0 +1,121 @@
+<Window x:Class="eGPUBridge.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="eGPUBridge"
+        Width="760"
+        Height="620"
+        MinWidth="620"
+        MinHeight="500"
+        WindowStartupLocation="CenterScreen">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Margin="0,0,0,20">
+            <TextBlock FontSize="28" FontWeight="Bold" Text="eGPUBridge" />
+            <TextBlock Margin="0,4,0,0"
+                       Foreground="{StaticResource SecondaryTextBrush}"
+                       Text="Windows display switching for handheld PCs and external GPUs" />
+        </StackPanel>
+
+        <Border Grid.Row="1"
+                Margin="0,0,0,16"
+                Padding="16"
+                Background="{StaticResource CardBackgroundBrush}"
+                CornerRadius="10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Foreground="{StaticResource SecondaryTextBrush}" Text="Current topology" />
+                    <TextBlock x:Name="TopologyText" Margin="0,3,0,0" FontSize="22" FontWeight="SemiBold" Text="Detecting…" />
+                    <TextBlock x:Name="CapturedAtText" Margin="0,3,0,0" Foreground="{StaticResource SecondaryTextBrush}" />
+                </StackPanel>
+                <Button Grid.Column="1" Click="RefreshClick" Content="Refresh" />
+            </Grid>
+        </Border>
+
+        <TabControl Grid.Row="2" Background="{StaticResource CardBackgroundBrush}" BorderThickness="0">
+            <TabItem Header="Displays">
+                <Grid Margin="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <ListView x:Name="DisplaysList" Background="Transparent" BorderThickness="0">
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <Border Margin="0,0,0,8" Padding="12" Background="#263244" CornerRadius="8">
+                                    <StackPanel>
+                                        <TextBlock FontSize="16" FontWeight="SemiBold" Text="{Binding Name}" />
+                                        <TextBlock Margin="0,4,0,0"
+                                                   Foreground="{StaticResource SecondaryTextBrush}"
+                                                   Text="{Binding Connection, StringFormat=Connection: {0}}" />
+                                        <TextBlock Foreground="{StaticResource SecondaryTextBrush}"
+                                                   Text="{Binding AdapterId, StringFormat=Adapter: {0}}" />
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+
+                    <UniformGrid Grid.Row="1" Columns="4" Margin="-4,12,-4,0">
+                        <Button Click="InternalClick" Content="Internal only" />
+                        <Button Click="ExternalClick" Content="External only" />
+                        <Button Click="ExtendClick" Content="Extend" />
+                        <Button Click="CloneClick" Content="Duplicate" />
+                    </UniformGrid>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Graphics adapters">
+                <ListView x:Name="AdaptersList" Margin="12" Background="Transparent" BorderThickness="0">
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="0,0,0,8" Padding="12" Background="#263244" CornerRadius="8">
+                                <StackPanel>
+                                    <TextBlock FontSize="16" FontWeight="SemiBold" Text="{Binding Name}" />
+                                    <TextBlock Margin="0,4,0,0"
+                                               Foreground="{StaticResource SecondaryTextBrush}"
+                                               Text="{Binding DeviceName}" />
+                                    <TextBlock Foreground="{StaticResource SecondaryTextBrush}"
+                                               Text="{Binding IsPrimary, StringFormat=Primary adapter: {0}}" />
+                                    <TextBlock Foreground="{StaticResource SecondaryTextBrush}"
+                                               Text="{Binding LikelyExternal, StringFormat=Possible external adapter: {0}}" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </TabItem>
+
+            <TabItem Header="Support">
+                <StackPanel Margin="20">
+                    <TextBlock FontSize="18" FontWeight="SemiBold" Text="Troubleshooting" />
+                    <TextBlock Margin="0,8,0,14"
+                               Foreground="{StaticResource SecondaryTextBrush}"
+                               TextWrapping="Wrap"
+                               Text="eGPUBridge writes structured JSON Lines logs for every display snapshot and switch request. Logs do not intentionally include account credentials." />
+                    <Button Width="180" HorizontalAlignment="Left" Click="OpenLogsClick" Content="Open log folder" />
+                    <TextBlock Margin="0,24,0,0"
+                               Foreground="#FBBF24"
+                               TextWrapping="Wrap"
+                               Text="Early development build: this version changes Windows display topology only. It does not install drivers, disable GPUs, change clocks, or eject hardware." />
+                </StackPanel>
+            </TabItem>
+        </TabControl>
+
+        <TextBlock x:Name="StatusText"
+                   Grid.Row="3"
+                   Margin="2,14,2,0"
+                   Foreground="{StaticResource SecondaryTextBrush}"
+                   Text="Ready" />
+    </Grid>
+</Window>
+
