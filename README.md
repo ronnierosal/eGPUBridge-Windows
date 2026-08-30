@@ -39,6 +39,8 @@ implement display or hardware mutations itself.
 - Skips a topology request when the requested state is already active.
 - Verifies the observed topology after every request and attempts to restore and
   verify the previous topology when the requested state cannot be confirmed.
+- Watches Windows display-adapter, monitor, and display-configuration notifications,
+  then debounces and refreshes read-only status without auto-switching.
 - Remains available in the Windows notification area when its window is closed.
 - Writes identifier-redacted JSON Lines troubleshooting logs under
   `%LOCALAPPDATA%\eGPUBridge\logs`.
@@ -97,7 +99,8 @@ The first hardware pass should be deliberately small:
 1. Start the application with the GPD G1 disconnected and capture the Displays and
    Graphics adapters tabs.
 2. Connect the GPD G1 and TV, wait for Windows and the AMD driver to finish device
-   discovery, then press **Refresh**.
+   discovery, and confirm the app refreshes automatically. Use **Refresh** as a
+   manual fallback.
 3. Confirm the TV appears as HDMI or DisplayPort and the Ally panel appears as an
    internal or embedded DisplayPort connection.
 4. Try **Extend** before trying **External only**.
@@ -110,14 +113,14 @@ using it. Safe removal is not part of this starter.
 ## Planned milestones
 
 1. Validate display enumeration and topology switching on the ROG Ally X + GPD G1.
-2. Validate the new PCI/device identity evidence on target hardware, then add
-   connection/removal event logging.
-3. Detect running games and require confirmation before disruptive changes.
+2. Validate PCI/device identity and arrival/removal evidence on target hardware.
+3. Implement the documented running-game guard and approval policy.
 4. Add saved per-setup profiles keyed to exact hardware identity.
 5. Add remote troubleshooting instructions and supervised capture tooling.
-6. Add hot-plug status refresh and event logging before considering automation.
-7. Add an optional, versioned local API for the Windows Decky-style client only
+6. Add an optional, versioned local API for the Windows Decky-style client only
    after the standalone transition contract is stable.
+7. Consider opt-in automation only after identity, game protection, manual
+   switching, debounce, and rollback pass hardware validation.
 
 ## Project layout
 

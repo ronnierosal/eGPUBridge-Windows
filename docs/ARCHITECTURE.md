@@ -30,6 +30,10 @@ calls the Windows display APIs:
 The UI does not call native functions directly. This boundary allows a fake
 `IDisplayService` to be used for future UI tests.
 
+Transition polling uses the lightweight `GetCurrentTopology` method. Full
+`GetSnapshot` calls also enumerate hardware identity and are reserved for visible
+status, explicit refresh, device changes, and support reports.
+
 ### Display transition coordinator
 
 `DisplayTransitionCoordinator` owns each user-requested topology operation. It:
@@ -54,6 +58,20 @@ paths. `HardwareIdentityParser` records PCI `VEN`, `DEV`, `SUBSYS`, and `REV`
 values when present. A display adapter LUID is correlated only when its Windows
 interface path exactly matches an enumerated PnP node interface path; no adapter
 is assigned a product identity from the parsed values alone.
+
+### Device awareness
+
+`DeviceNotificationService` uses the documented Windows
+[`RegisterDeviceNotification`](https://learn.microsoft.com/windows/win32/api/winuser/nf-winuser-registerdevicenotificationw)
+flow to register the WPF window for display-adapter and monitor interface
+notifications and also observes `WM_DISPLAYCHANGE`. Arrival,
+completed removal, and configuration-change messages become read-only structured
+events. It does not switch displays or issue Configuration Manager mutations.
+
+`DeviceRefreshCoordinator` debounces notification bursts and serializes refresh
+callbacks. If the UI is already applying or reading state, `MainWindow` defers the
+refresh until that operation completes. Manual Refresh remains available when a
+driver or device does not emit the expected notification.
 
 ### Logging
 
@@ -102,13 +120,22 @@ Verification requires contract fixtures, a fake-core integration test for the
 loader, a real-core smoke test, controller-focus testing, and the same target
 hardware pass required by the standalone application.
 
+### Running-game guard
+
+The planned guard uses a three-state **Clear**, **Active**, or **Unknown** result
+and combines current-session process ancestry with target-LUID GPU activity when
+available. It never terminates a game, and unattended callers fail closed on
+**Active** or **Unknown**. The evidence model, privacy rules, approval boundary,
+and verification gates are defined in
+[WINDOWS_GAME_GUARD.md](WINDOWS_GAME_GUARD.md).
+
 ## Current limitations
 
 - External-only mode uses Windows' saved external topology; it does not yet select
   an exact TV target when several external displays are connected.
 - Secondary-adapter detection is a diagnostic heuristic, not GPD G1 identity.
-- There is no exact external target selection, running-game guard, device-arrival
-  watcher, saved profile, installer, auto-start, or release pipeline yet.
+- There is no exact external target selection, running-game guard, saved profile,
+  installer, auto-start, or release pipeline yet.
 - The current repository host does not have the .NET SDK, so GitHub Actions is the
   initial compilation authority.
 
