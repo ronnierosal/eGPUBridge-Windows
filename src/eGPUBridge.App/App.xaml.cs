@@ -21,7 +21,8 @@ public partial class App : System.Windows.Application
         });
 
         var displayService = new WindowsDisplayService(_logger);
-        _mainWindow = new MainWindow(displayService, _logger);
+        var transitionCoordinator = new DisplayTransitionCoordinator(displayService, _logger);
+        _mainWindow = new MainWindow(displayService, transitionCoordinator, _logger);
         _trayIcon = new TrayIconService();
         _trayIcon.ShowRequested += ShowMainWindow;
         _trayIcon.ExitRequested += ExitApplication;
@@ -57,4 +58,3 @@ public partial class App : System.Windows.Application
         Shutdown();
     }
 }
-

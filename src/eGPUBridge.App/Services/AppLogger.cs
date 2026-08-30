@@ -4,7 +4,7 @@ using System.Text.Json;
 
 namespace eGPUBridge.App.Services;
 
-public sealed class AppLogger
+public sealed class AppLogger : IEventLogger
 {
     private readonly object _writeLock = new();
     private readonly JsonSerializerOptions _jsonOptions = new()

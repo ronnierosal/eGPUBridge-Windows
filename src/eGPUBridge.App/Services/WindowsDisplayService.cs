@@ -4,7 +4,7 @@ using eGPUBridge.App.Models;
 
 namespace eGPUBridge.App.Services;
 
-public sealed class WindowsDisplayService(AppLogger logger) : IDisplayService
+public sealed class WindowsDisplayService(IEventLogger logger) : IDisplayService
 {
     public DisplaySnapshot GetSnapshot()
     {
@@ -35,7 +35,7 @@ public sealed class WindowsDisplayService(AppLogger logger) : IDisplayService
             _ => throw new ArgumentOutOfRangeException(nameof(topology), topology, "A concrete topology is required.")
         };
 
-        logger.Info("display.topology.requested", "Applying Windows display topology.", new
+        logger.Info("display.native.apply.requested", "Calling SetDisplayConfig for a Windows display topology.", new
         {
             topology = topology.ToString()
         });
@@ -44,7 +44,7 @@ public sealed class WindowsDisplayService(AppLogger logger) : IDisplayService
         if (result != NativeMethods.ErrorSuccess)
         {
             var exception = new Win32Exception(result);
-            logger.Error("display.topology.failed", "Windows rejected the requested display topology.", exception, new
+            logger.Error("display.native.apply.failed", "SetDisplayConfig rejected the requested display topology.", exception, new
             {
                 topology = topology.ToString(),
                 nativeError = result
@@ -52,7 +52,7 @@ public sealed class WindowsDisplayService(AppLogger logger) : IDisplayService
             throw exception;
         }
 
-        logger.Info("display.topology.applied", "Windows accepted the requested display topology.", new
+        logger.Info("display.native.apply.accepted", "SetDisplayConfig accepted the requested display topology.", new
         {
             topology = topology.ToString()
         });
@@ -184,4 +184,3 @@ public sealed class WindowsDisplayService(AppLogger logger) : IDisplayService
         }
     }
 }
-

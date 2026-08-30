@@ -28,18 +28,37 @@ calls the Windows display APIs:
 The UI does not call native functions directly. This boundary allows a fake
 `IDisplayService` to be used for future UI tests.
 
+### Display transition coordinator
+
+`DisplayTransitionCoordinator` owns each user-requested topology operation. It:
+
+- serializes requests so two transitions cannot overlap;
+- records the previous observed topology and skips an exact no-op;
+- treats `SetDisplayConfig` acceptance as an intermediate result, not success;
+- polls `IDisplayService` for a bounded period until the requested topology is
+  observed; and
+- restores and verifies the previous known topology when verification fails.
+
+The result includes an operation ID, requested, previous, and final topology,
+start time, duration, warnings, error text, and rollback outcome. The coordinator
+owns the operation after it starts; a future optional UI client disconnect must
+not cancel verification or rollback.
+
 ### Logging
 
 `AppLogger` writes one JSON object per line under
-`%LOCALAPPDATA%\eGPUBridge\logs`. Each topology request records the request,
-native result, and a subsequent display snapshot.
+`%LOCALAPPDATA%\eGPUBridge\logs`. Each topology operation records the shared
+transition lifecycle, the native `SetDisplayConfig` result, verification, and any
+rollback attempt under one operation ID.
 
 ### Optional Decky Loader for Windows integration
 
-[`decky-loader-windows`](https://github.com/ronnierosal/decky-loader-windows) is a
-planned optional host for a Decky-style, controller-friendly eGPUBridge interface.
-The loader repository is empty as of the 2026-08-30 architecture review, so no
-runtime compatibility is claimed yet.
+[`decky-loader-windows`](https://github.com/ronnierosal/decky-loader-windows) is an
+active, experimental feasibility prototype for a Decky-style Windows host. Its
+frontend and packaged loader build, and its authenticated loopback service and
+plugin discovery have been exercised against an isolated mock Chromium harness.
+Live Steam injection remains intentionally disabled, so eGPUBridge runtime
+compatibility is not claimed yet.
 
 The standalone WPF application and its services remain the Windows core and the
 only authority for display and hardware operations. A future loader plugin may:
@@ -69,8 +88,8 @@ hardware pass required by the standalone application.
 - External-only mode uses Windows' saved external topology; it does not yet select
   an exact TV target when several external displays are connected.
 - Secondary-adapter detection is a diagnostic heuristic, not GPD G1 identity.
-- There is no device-arrival watcher, rollback token, installer, auto-start, or
-  signed release pipeline yet.
+- There is no exact external target selection, running-game guard, device-arrival
+  watcher, saved profile, installer, auto-start, or release pipeline yet.
 - The current repository host does not have the .NET SDK, so GitHub Actions is the
   initial compilation authority.
 
