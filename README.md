@@ -14,6 +14,8 @@ systemd implementation is not portable.
 
 The two applications share the goal of making external-GPU display switching safer
 and easier, but each platform has an independent implementation and release cycle.
+Their shared terminology, safety rules, feature matrix, and implementation order
+are maintained in [the cross-platform parity contract](docs/CROSS_PLATFORM_PARITY.md).
 
 ## Current starter functionality
 

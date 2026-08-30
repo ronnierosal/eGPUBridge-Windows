@@ -50,3 +50,6 @@ Create a stable hardware identity from Windows Configuration Manager device node
 PCI vendor/device/subsystem IDs, and the display adapter LUID. The identity must be
 captured in logs and verified before any GPD-specific behavior is enabled.
 
+After identity is stable, follow the shared transition and diagnostic vocabulary
+in [CROSS_PLATFORM_PARITY.md](CROSS_PLATFORM_PARITY.md) so Windows and SteamOS
+features remain recognizable without sharing platform-specific implementation.
