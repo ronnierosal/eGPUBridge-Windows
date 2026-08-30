@@ -21,6 +21,9 @@ Status below was checked against default branches, not product claims alone:
   `dist/index.js`, and `tests/test_display_switching.py`; [CI passed 7 tests](https://github.com/ronnierosal/eGPUBridge/actions/runs/33320050213).
 - Windows `main` at [`d027c65`](https://github.com/ronnierosal/eGPUBridge-Windows/commit/d027c65cc5fae029226ede0347aa56ce428ca527): [CI passed 20 tests with no warnings](https://github.com/ronnierosal/eGPUBridge-Windows/actions/runs/33325611225).
 - Windows hardware-identity work is in flight at [`303896b`](https://github.com/ronnierosal/eGPUBridge-Windows/commit/303896bf76f984388c55be888f01d6ce994045cc): [branch CI passed 23 tests with no warnings](https://github.com/ronnierosal/eGPUBridge-Windows/actions/runs/33325930370), but it is not part of Windows `main` yet.
+- [`decky-loader-windows`](https://github.com/ronnierosal/decky-loader-windows) is
+  empty as of this review; loader compatibility is a planned architecture target,
+  not an implemented feature.
 
 Unless a row names another commit, statuses describe these snapshots. Hardware
 validation means the ROG Ally X + GPD G1 + TV pass; CI is not a substitute for it.
@@ -112,6 +115,7 @@ the target hardware pass.
 | EGB-P02 | Decky quick-access lifecycle | WPF application plus Windows notification area | Both: **Implemented** platform shells. | The standalone WPF application remains the Windows core; any future Decky companion is optional. | Core switching and recovery cannot depend on an optional integration. | W-CI compiles the shell; **runtime UI test pending**. |
 | EGB-P03 | GPU telemetry and AMD/NVIDIA power, fan, performance, and clock controls | Read-only telemetry may be considered; tuning stays separately gated | SteamOS: **Implemented/experimental**. Windows: **Disabled** for mutation. | Linux sysfs and vendor CLI operations are not Windows architecture. Any future Windows provider must use supported vendor/OS APIs. | Exact device bounds, explicit opt-in, validation, fail-safe defaults, and rollback are mandatory. | No target-hardware safety evidence. |
 | EGB-P04 | Experimental NVIDIA DKMS install/activate/deactivate/uninstall | Driver management remains outside the application | SteamOS: **Platform only/experimental**. Windows: **Not applicable**. | Windows drivers are installed and serviced by Windows/vendor tooling. | Never install/remove drivers, certificates, or weaken Windows security from eGPUBridge. | No Windows tests by design. |
+| EGB-P05 | Decky hosts the SteamOS plugin directly in its quick-access UI | `decky-loader-windows` optionally hosts a Windows eGPUBridge UI over a versioned local core API | SteamOS: **Implemented** through Decky. Windows: **Planned**; the loader repository is currently empty. | The Windows plugin is a UI/client only. The standalone eGPUBridge process remains the hardware and transition authority. | Current-user-only IPC, capability negotiation, preview/confirmation, operation IDs, core-owned verification/rollback, and full standalone recovery are mandatory. | No contract or integration tests yet. Require protocol fixtures, fake-core tests, real-core smoke tests, controller-focus tests, and **HW validation**. |
 
 ## Matrix maintenance rules
 
@@ -130,6 +134,9 @@ the target hardware pass.
    requirements. Add a new row when a capability has a distinct safety boundary.
 7. Platform differences are first-class decisions, not parity failures. Document
    them rather than claiming behavior Windows cannot safely support.
+8. Loader integration changes must update `EGB-P05` here and the corresponding
+   integration documentation and tests in both repositories. All critical
+   workflows must remain functional in the standalone WPF application.
 
 ## Shared safety contract
 
