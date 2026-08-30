@@ -18,12 +18,12 @@ public sealed class DiagnosticRedactorTests
             machineName: "ALLY-X",
             userProfile: @"C:\Users\Ronnie");
 
-        StringAssert.DoesNotContain(result, "ALLY-X");
-        StringAssert.DoesNotContain(result, "Ronnie");
-        StringAssert.DoesNotContain(result, "192.168.50.22");
-        StringAssert.DoesNotContain(result, "fe80::1234");
-        StringAssert.DoesNotContain(result, "AA:BB:CC:DD:EE:FF");
-        StringAssert.DoesNotContain(result, "5&1234&0&UID4352");
+        Assert.IsFalse(result.Contains("ALLY-X", StringComparison.OrdinalIgnoreCase));
+        Assert.IsFalse(result.Contains("Ronnie", StringComparison.OrdinalIgnoreCase));
+        Assert.IsFalse(result.Contains("192.168.50.22", StringComparison.Ordinal));
+        Assert.IsFalse(result.Contains("fe80::1234", StringComparison.OrdinalIgnoreCase));
+        Assert.IsFalse(result.Contains("AA:BB:CC:DD:EE:FF", StringComparison.OrdinalIgnoreCase));
+        Assert.IsFalse(result.Contains("5&1234&0&UID4352", StringComparison.OrdinalIgnoreCase));
         StringAssert.Contains(result, "DISPLAY#GSM5B09#<device-instance>");
         StringAssert.Contains(result, @"PCI\VEN_1002&DEV_7480&SUBSYS_12341002");
     }
@@ -75,14 +75,14 @@ public sealed class DiagnosticRedactorTests
 
             var text = File.ReadAllText(Directory.GetFiles(root, "*.jsonl").Single());
             using var document = JsonDocument.Parse(text);
-            StringAssert.DoesNotContain(text, "192.168.50.22");
-            StringAssert.DoesNotContain(text, "AA:BB:CC:DD:EE:FF");
+            Assert.IsFalse(text.Contains("192.168.50.22", StringComparison.Ordinal));
+            Assert.IsFalse(text.Contains("AA:BB:CC:DD:EE:FF", StringComparison.OrdinalIgnoreCase));
             Assert.AreEqual(
                 @"PCI\VEN_1002&DEV_7480",
                 document.RootElement.GetProperty("data").GetProperty("pci").GetString());
             if (!string.IsNullOrWhiteSpace(Environment.MachineName) && Environment.MachineName.Length >= 3)
             {
-                StringAssert.DoesNotContain(text, Environment.MachineName);
+                Assert.IsFalse(text.Contains(Environment.MachineName, StringComparison.OrdinalIgnoreCase));
             }
         }
         finally

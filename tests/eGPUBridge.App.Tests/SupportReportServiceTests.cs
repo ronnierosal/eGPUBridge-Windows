@@ -30,9 +30,9 @@ public sealed class SupportReportServiceTests
 
             Assert.IsTrue(report.RootElement.GetProperty("redacted").GetBoolean());
             Assert.AreEqual(1, report.RootElement.GetProperty("schemaVersion").GetInt32());
-            StringAssert.DoesNotContain(text, "192.168.50.22");
-            StringAssert.DoesNotContain(text, "AA:BB:CC:DD:EE:FF");
-            StringAssert.DoesNotContain(text, "5&1234&0&UID4352");
+            Assert.IsFalse(text.Contains("192.168.50.22", StringComparison.Ordinal));
+            Assert.IsFalse(text.Contains("AA:BB:CC:DD:EE:FF", StringComparison.OrdinalIgnoreCase));
+            Assert.IsFalse(text.Contains("5&1234&0&UID4352", StringComparison.OrdinalIgnoreCase));
             StringAssert.Contains(text, "device-instance");
             StringAssert.Contains(text, "VEN_1002");
             StringAssert.Contains(text, "DEV_7480");
