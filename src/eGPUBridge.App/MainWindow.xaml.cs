@@ -107,7 +107,9 @@ public partial class MainWindow : Window
             switch (result.Outcome)
             {
                 case DisplayTransitionOutcome.Succeeded:
-                    StatusText.Text = $"Verified {topology} topology in {result.Duration.TotalSeconds:F1} seconds.";
+                    StatusText.Text = result.Warnings.Count == 0
+                        ? $"Verified {topology} topology in {result.Duration.TotalSeconds:F1} seconds."
+                        : $"Verified {topology}, but Windows reported a warning. Details were written to the log.";
                     break;
                 case DisplayTransitionOutcome.NoChange:
                     StatusText.Text = $"{topology} topology is already active; no switch was needed.";
