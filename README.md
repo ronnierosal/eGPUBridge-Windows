@@ -29,6 +29,10 @@ implement display or hardware mutations itself.
 
 - Enumerates active Windows display paths and monitor names.
 - Lists Windows display adapters without changing them.
+- Captures present display-adapter PnP instance IDs and PCI `VEN`, `DEV`,
+  `SUBSYS`, and `REV` evidence through read-only Configuration Manager APIs.
+- Correlates active display-adapter LUIDs with PnP nodes when Windows exposes a
+  matching display-adapter interface path.
 - Identifies internal versus external display connections.
 - Applies Windows' saved internal-only, external-only, extended, or duplicated
   display topology.
@@ -50,8 +54,9 @@ This starter changes Windows display topology only. It does **not**:
 - claim that a secondary adapter is definitely the GPD G1;
 - implement safe physical eGPU disconnection.
 
-Adapter identity is currently informational. Exact GPD G1 identity and topology
-validation must be added before any device-specific or privileged operation.
+Adapter identity is informational evidence only. The application does not label a
+device as the GPD G1; that identity and topology must be verified on the target
+hardware before any device-specific or privileged operation.
 
 ## Build
 
@@ -103,7 +108,8 @@ using it. Safe removal is not part of this starter.
 ## Planned milestones
 
 1. Validate display enumeration and topology switching on the ROG Ally X + GPD G1.
-2. Add exact PCI/device identity and connection/removal event logging.
+2. Validate the new PCI/device identity evidence on target hardware, then add
+   connection/removal event logging.
 3. Detect running games and require confirmation before disruptive changes.
 4. Add saved per-setup profiles keyed to exact hardware identity.
 5. Consolidate the redacted support-report branch and remote troubleshooting flow.

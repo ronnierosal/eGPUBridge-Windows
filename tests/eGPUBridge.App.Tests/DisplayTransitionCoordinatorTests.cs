@@ -208,7 +208,12 @@ public sealed class DisplayTransitionCoordinatorTests
                 DateTimeOffset.UtcNow,
                 topology,
                 Array.Empty<DisplayTarget>(),
-                Array.Empty<GpuAdapter>());
+                Array.Empty<GpuAdapter>(),
+                new HardwareIdentitySnapshot(
+                    DateTimeOffset.UtcNow,
+                    Array.Empty<PnpDeviceIdentity>(),
+                    Array.Empty<DisplayAdapterIdentity>(),
+                    Array.Empty<string>()));
     }
 
     private sealed class FakeEventLogger : IEventLogger

@@ -22,6 +22,8 @@ calls the Windows display APIs:
 
 - `GetDisplayConfigBufferSizes` and `QueryDisplayConfig` enumerate active paths.
 - `DisplayConfigGetDeviceInfo` resolves friendly monitor names.
+- `DisplayConfigGetDeviceInfo` also resolves active adapter LUIDs to Windows
+  display-adapter interface paths.
 - `EnumDisplayDevices` lists graphics adapters for diagnostics.
 - `SetDisplayConfig` applies a Windows-managed topology.
 
@@ -43,6 +45,15 @@ The result includes an operation ID, requested, previous, and final topology,
 start time, duration, warnings, error text, and rollback outcome. The coordinator
 owns the operation after it starts; a future optional UI client disconnect must
 not cancel verification or rollback.
+
+### Hardware identity service
+
+`HardwareIdentityService` uses read-only Configuration Manager calls to enumerate
+present display-class PnP nodes and their `GUID_DEVINTERFACE_DISPLAY_ADAPTER`
+paths. `HardwareIdentityParser` records PCI `VEN`, `DEV`, `SUBSYS`, and `REV`
+values when present. A display adapter LUID is correlated only when its Windows
+interface path exactly matches an enumerated PnP node interface path; no adapter
+is assigned a product identity from the parsed values alone.
 
 ### Logging
 
@@ -93,11 +104,11 @@ hardware pass required by the standalone application.
 - The current repository host does not have the .NET SDK, so GitHub Actions is the
   initial compilation authority.
 
-## Next design step
+## Next validation step
 
-Create a stable hardware identity from Windows Configuration Manager device nodes,
-PCI vendor/device/subsystem IDs, and the display adapter LUID. The identity must be
-captured in logs and verified before any GPD-specific behavior is enabled.
+Capture identity logs with the GPD G1 disconnected and connected, compare the raw
+PnP IDs and LUID correlations, and verify the stable evidence before any
+GPD-specific behavior is enabled.
 
 After identity is stable, follow the shared transition and diagnostic vocabulary
 in [CROSS_PLATFORM_PARITY.md](CROSS_PLATFORM_PARITY.md) so Windows and SteamOS
