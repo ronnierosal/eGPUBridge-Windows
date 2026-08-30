@@ -7,6 +7,14 @@ This project is separate from the SteamOS Decky plugin. Windows uses its own dis
 configuration and device-notification APIs, so the Linux Gamescope, DRM, sysfs, and
 systemd implementation is not portable.
 
+## Related projects
+
+- [Original eGPUBridge SteamOS/Decky plugin](https://github.com/WowOne987/eGPUBridge)
+- [Ronnie's eGPUBridge SteamOS fork](https://github.com/ronnierosal/eGPUBridge)
+
+The two applications share the goal of making external-GPU display switching safer
+and easier, but each platform has an independent implementation and release cycle.
+
 ## Current starter functionality
 
 - Enumerates active Windows display paths and monitor names.
@@ -49,6 +57,19 @@ dotnet run --project .\src\eGPUBridge.App\eGPUBridge.App.csproj
 GitHub Actions also restores, builds, and tests every pull request and push to a
 `codex/**` branch.
 
+## Public release and signing policy
+
+Public Windows releases are intentionally unsigned. Windows Defender SmartScreen may
+therefore identify a downloaded installer or executable as coming from an unknown
+publisher. That warning does not by itself prove that a file is malicious, but users
+should only download releases from this repository's GitHub Releases page.
+
+Each public release should include SHA-256 checksums so users can verify that their
+download matches the artifact published by this project. The repository will never
+ask users to install a personal signing certificate or disable Windows security
+features. No public release should be published until the documented ROG Ally X and
+GPD G1 hardware checks pass.
+
 ## Testing on the ROG Ally X
 
 The first hardware pass should be deliberately small:
@@ -87,4 +108,3 @@ tests/eGPUBridge.App.Tests/  Hardware-independent unit tests
 
 Early development foundation. Hardware validation is required before publishing a
 release.
-
