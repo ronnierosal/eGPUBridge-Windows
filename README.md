@@ -32,6 +32,9 @@ implement display or hardware mutations itself.
 - Identifies internal versus external display connections.
 - Applies Windows' saved internal-only, external-only, extended, or duplicated
   display topology.
+- Skips a topology request when the requested state is already active.
+- Verifies the observed topology after every request and attempts to restore and
+  verify the previous topology when the requested state cannot be confirmed.
 - Remains available in the Windows notification area when its window is closed.
 - Writes structured JSON Lines troubleshooting logs under
   `%LOCALAPPDATA%\eGPUBridge\logs`.
@@ -101,10 +104,12 @@ using it. Safe removal is not part of this starter.
 
 1. Validate display enumeration and topology switching on the ROG Ally X + GPD G1.
 2. Add exact PCI/device identity and connection/removal event logging.
-3. Add saved per-setup profiles with verified post-switch state and rollback.
-4. Detect running games and require confirmation before disruptive changes.
-5. Add a redacted support-report export and remote troubleshooting instructions.
-6. Consider opt-in automatic switching only after manual switching is reliable.
+3. Detect running games and require confirmation before disruptive changes.
+4. Add saved per-setup profiles keyed to exact hardware identity.
+5. Consolidate the redacted support-report branch and remote troubleshooting flow.
+6. Add hot-plug status refresh and event logging before considering automation.
+7. Add an optional, versioned local API for the Windows Decky-style client only
+   after the standalone transition contract is stable.
 
 ## Project layout
 
