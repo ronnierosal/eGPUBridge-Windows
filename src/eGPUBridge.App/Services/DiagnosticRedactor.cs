@@ -10,7 +10,7 @@ public static class DiagnosticRedactor
     private const string RedactedIp = "<ip-address>";
     private const string RedactedMac = "<mac-address>";
     private static readonly Regex Ipv4Pattern = new(
-        @"(?<![0-9.])(?:\d{1,3}\.){3}\d{1,3}(?![0-9.])",
+        @"(?<![0-9.])(?:\d{1,3}\.){3}\d{1,3}(?![0-9]|\.[0-9])",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
     private static readonly Regex Ipv6Pattern = new(
         @"(?<![0-9A-Fa-f:%])(?=[0-9A-Fa-f:%]*:[0-9A-Fa-f:%]*:)[0-9A-Fa-f:]+(?:%[A-Za-z0-9._-]+)?(?![0-9A-Fa-f:%])",
