@@ -10,7 +10,7 @@ public sealed class DiagnosticRedactorTests
     [TestMethod]
     public void Redact_RemovesLocalIdentifiersAndPreservesPciIdentity()
     {
-        const string input = @"ALLY-X Ronnie C:\Users\Ronnie\report 192.168.50.22 fe80::1234%12 AA:BB:CC:DD:EE:FF \\?\DISPLAY#GSM5B09#5&1234&0&UID4352#{4d36e96e-e325-11ce-bfc1-08002be10318} PCI\VEN_1002&DEV_7480&SUBSYS_12341002";
+        const string input = @"ALLY-X Ronnie C:\Users\Ronnie\report 192.168.50.22 fe80::1234%12 AA:BB:CC:DD:EE:FF \\?\DISPLAY#GSM5B09#5&1234&0&UID4352#{4d36e96e-e325-11ce-bfc1-08002be10318} \\?\PCI#VEN_1002&DEV_7480#7&5678&0&0000#{5b45201d-f2f2-4f3b-85bb-30ff1f953599} PCI\VEN_1002&DEV_7480&SUBSYS_12341002\5&1234&0&0000";
 
         var result = DiagnosticRedactor.Redact(
             input,
@@ -24,7 +24,10 @@ public sealed class DiagnosticRedactorTests
         Assert.IsFalse(result.Contains("fe80::1234", StringComparison.OrdinalIgnoreCase));
         Assert.IsFalse(result.Contains("AA:BB:CC:DD:EE:FF", StringComparison.OrdinalIgnoreCase));
         Assert.IsFalse(result.Contains("5&1234&0&UID4352", StringComparison.OrdinalIgnoreCase));
+        Assert.IsFalse(result.Contains("5&1234&0&0000", StringComparison.OrdinalIgnoreCase));
+        Assert.IsFalse(result.Contains("7&5678&0&0000", StringComparison.OrdinalIgnoreCase));
         StringAssert.Contains(result, "DISPLAY#GSM5B09#<device-instance>");
+        StringAssert.Contains(result, "PCI#VEN_1002&DEV_7480#<device-instance>");
         StringAssert.Contains(result, @"PCI\VEN_1002&DEV_7480&SUBSYS_12341002");
     }
 
@@ -70,7 +73,8 @@ public sealed class DiagnosticRedactorTests
                 machine = Environment.MachineName,
                 ip = "192.168.50.22",
                 mac = "AA:BB:CC:DD:EE:FF",
-                pci = @"PCI\VEN_1002&DEV_7480"
+                pci = @"PCI\VEN_1002&DEV_7480",
+                pnp = @"PCI\VEN_1002&DEV_7480&SUBSYS_12341002\5&1234&0&0000"
             });
 
             var text = File.ReadAllText(Directory.GetFiles(root, "*.jsonl").Single());
@@ -80,6 +84,9 @@ public sealed class DiagnosticRedactorTests
             Assert.AreEqual(
                 @"PCI\VEN_1002&DEV_7480",
                 document.RootElement.GetProperty("data").GetProperty("pci").GetString());
+            Assert.AreEqual(
+                @"PCI\VEN_1002&DEV_7480&SUBSYS_12341002\5&1234&0&0000",
+                document.RootElement.GetProperty("data").GetProperty("pnp").GetString());
             if (!string.IsNullOrWhiteSpace(Environment.MachineName) && Environment.MachineName.Length >= 3)
             {
                 Assert.IsFalse(text.Contains(Environment.MachineName, StringComparison.OrdinalIgnoreCase));

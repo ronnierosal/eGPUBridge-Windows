@@ -42,7 +42,7 @@ public sealed class AppLogger : IEventLogger
                 data
             };
             var raw = JsonSerializer.Serialize(entry, _jsonOptions);
-            var line = DiagnosticRedactor.RedactJson(raw) + Environment.NewLine;
+            var line = DiagnosticRedactor.RedactJson(raw, preserveDeviceInstances: true) + Environment.NewLine;
             var path = Path.Combine(LogDirectory, $"egpubridge-{DateTime.UtcNow:yyyy-MM-dd}.jsonl");
 
             lock (_writeLock)

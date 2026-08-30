@@ -80,12 +80,14 @@ driver or device does not emit the expected notification.
 transition lifecycle, the native `SetDisplayConfig` result, verification, and any
 rollback attempt under one operation ID. `DiagnosticRedactor` walks serialized
 JSON values before they reach disk and removes the local user profile, user and
-machine names, network addresses, and unique monitor instance segments while
-retaining useful PCI vendor/device/subsystem evidence.
+machine names, and network addresses while retaining the raw hardware-instance
+evidence required for local validation.
 
 `SupportReportService` captures the current display and hardware-identity snapshot
 plus at most 500 recent entries from the three newest log files. It applies
-redaction again and writes a shareable JSON report under
+strict export redaction, including unique monitor and PnP device-instance tails,
+while preserving PCI vendor/device/subsystem values. It writes the shareable JSON
+report under
 `%LOCALAPPDATA%\eGPUBridge\support`.
 
 ### Optional Decky Loader for Windows integration

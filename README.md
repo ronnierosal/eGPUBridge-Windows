@@ -42,8 +42,9 @@ implement display or hardware mutations itself.
 - Watches Windows display-adapter, monitor, and display-configuration notifications,
   then debounces and refreshes read-only status without auto-switching.
 - Remains available in the Windows notification area when its window is closed.
-- Writes identifier-redacted JSON Lines troubleshooting logs under
-  `%LOCALAPPDATA%\eGPUBridge\logs`.
+- Writes structured JSON Lines troubleshooting logs under
+  `%LOCALAPPDATA%\eGPUBridge\logs`. Local logs retain raw hardware instance
+  evidence for validation and should not be shared directly.
 - Exports a bounded, redacted JSON support report containing the current display
   snapshot and recent structured events.
 - Runs without administrator privileges.

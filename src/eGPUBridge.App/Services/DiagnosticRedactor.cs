@@ -18,15 +18,19 @@ public static class DiagnosticRedactor
     private static readonly Regex MacPattern = new(
         @"(?i)(?<![0-9a-f])(?:[0-9a-f]{2}[:-]){5}[0-9a-f]{2}(?![0-9a-f])",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
-    private static readonly Regex MonitorInstancePattern = new(
-        @"(?i)(\\\\\?\\DISPLAY#[^#\s]+#)[^#\s]+(?=#\{)",
+    private static readonly Regex DeviceInterfaceInstancePattern = new(
+        @"(?i)(\\\\\?\\(?:DISPLAY|PCI|USB|HID|SWD|ROOT)#[^#\s]+#)[^#\s]+(?=#\{)",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
+    private static readonly Regex PnpDeviceInstancePattern = new(
+        "(?i)\\b((?:PCI|USB|ROOT|SWD|HID|BTHENUM|DISPLAY)\\\\[^\\\\\\s\\\"']+\\\\)[^\\\\\\s\\\"']+",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     public static string Redact(
         string value,
         string? userName = null,
         string? machineName = null,
-        string? userProfile = null)
+        string? userProfile = null,
+        bool preserveDeviceInstances = false)
     {
         if (string.IsNullOrEmpty(value))
         {
@@ -57,7 +61,12 @@ public static class DiagnosticRedactor
             var candidate = match.Value.Split('%', 2)[0];
             return IPAddress.TryParse(candidate, out _) ? RedactedIp : match.Value;
         });
-        redacted = MonitorInstancePattern.Replace(redacted, "$1<device-instance>");
+        if (!preserveDeviceInstances)
+        {
+            redacted = DeviceInterfaceInstancePattern.Replace(redacted, "$1<device-instance>");
+            redacted = PnpDeviceInstancePattern.Replace(redacted, "$1<device-instance>");
+        }
+
         return redacted;
     }
 
@@ -65,7 +74,8 @@ public static class DiagnosticRedactor
         string json,
         string? userName = null,
         string? machineName = null,
-        string? userProfile = null)
+        string? userProfile = null,
+        bool preserveDeviceInstances = false)
     {
         var root = JsonNode.Parse(json);
         if (root is null)
@@ -73,7 +83,7 @@ public static class DiagnosticRedactor
             return json;
         }
 
-        RedactNode(root, userName, machineName, userProfile);
+        RedactNode(root, userName, machineName, userProfile, preserveDeviceInstances);
         return root.ToJsonString(new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
@@ -98,7 +108,8 @@ public static class DiagnosticRedactor
         JsonNode node,
         string? userName,
         string? machineName,
-        string? userProfile)
+        string? userProfile,
+        bool preserveDeviceInstances)
     {
         if (node is JsonObject jsonObject)
         {
@@ -106,11 +117,16 @@ public static class DiagnosticRedactor
             {
                 if (property.Value is JsonValue value && value.TryGetValue<string>(out var text))
                 {
-                    jsonObject[property.Key] = Redact(text, userName, machineName, userProfile);
+                    jsonObject[property.Key] = Redact(
+                        text,
+                        userName,
+                        machineName,
+                        userProfile,
+                        preserveDeviceInstances);
                 }
                 else if (property.Value is not null)
                 {
-                    RedactNode(property.Value, userName, machineName, userProfile);
+                    RedactNode(property.Value, userName, machineName, userProfile, preserveDeviceInstances);
                 }
             }
         }
@@ -120,11 +136,16 @@ public static class DiagnosticRedactor
             {
                 if (jsonArray[index] is JsonValue value && value.TryGetValue<string>(out var text))
                 {
-                    jsonArray[index] = Redact(text, userName, machineName, userProfile);
+                    jsonArray[index] = Redact(
+                        text,
+                        userName,
+                        machineName,
+                        userProfile,
+                        preserveDeviceInstances);
                 }
                 else if (jsonArray[index] is not null)
                 {
-                    RedactNode(jsonArray[index]!, userName, machineName, userProfile);
+                    RedactNode(jsonArray[index]!, userName, machineName, userProfile, preserveDeviceInstances);
                 }
             }
         }
