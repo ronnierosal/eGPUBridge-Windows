@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.IO;
 using System.Text.Json;
 
 namespace eGPUBridge.App.Services;
@@ -54,4 +55,3 @@ public sealed class AppLogger
         }
     }
 }
-

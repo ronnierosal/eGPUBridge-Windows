@@ -1,8 +1,10 @@
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Windows;
 using eGPUBridge.App.Models;
 using eGPUBridge.App.Services;
+using MessageBox = System.Windows.MessageBox;
 
 namespace eGPUBridge.App;
 
@@ -143,4 +145,3 @@ public partial class MainWindow : Window
         StatusText.Text = "eGPUBridge is still running in the notification area.";
     }
 }
-
