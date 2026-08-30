@@ -11,13 +11,18 @@ namespace eGPUBridge.App;
 public partial class MainWindow : Window
 {
     private readonly IDisplayService _displayService;
+    private readonly DisplayTransitionCoordinator _transitionCoordinator;
     private readonly AppLogger _logger;
     private bool _allowClose;
     private bool _busy;
 
-    public MainWindow(IDisplayService displayService, AppLogger logger)
+    public MainWindow(
+        IDisplayService displayService,
+        DisplayTransitionCoordinator transitionCoordinator,
+        AppLogger logger)
     {
         _displayService = displayService;
+        _transitionCoordinator = transitionCoordinator;
         _logger = logger;
         InitializeComponent();
         Loaded += async (_, _) => await RefreshSnapshotAsync();
@@ -84,7 +89,7 @@ public partial class MainWindow : Window
 
         var answer = MessageBox.Show(
             this,
-            $"Switch Windows to the {topology.ToString().ToLowerInvariant()} display topology?\n\nThe screen may briefly go dark while Windows changes outputs.",
+            $"Switch Windows to the {topology.ToString().ToLowerInvariant()} display topology?\n\nThe screen may briefly go dark. eGPUBridge will verify the result and attempt to restore the current topology if verification fails.",
             "Confirm display switch",
             MessageBoxButton.OKCancel,
             MessageBoxImage.Question);
@@ -96,9 +101,48 @@ public partial class MainWindow : Window
         SetBusy(true, $"Applying {topology} topology…");
         try
         {
-            await Task.Run(() => _displayService.ApplyTopology(topology));
-            StatusText.Text = $"Windows accepted the {topology} topology.";
-            await RefreshSnapshotAsyncAfterSwitch();
+            var result = await _transitionCoordinator.SwitchAsync(topology);
+            await RefreshSnapshotAsyncAfterTransition();
+
+            switch (result.Outcome)
+            {
+                case DisplayTransitionOutcome.Succeeded:
+                    StatusText.Text = $"Verified {topology} topology in {result.Duration.TotalSeconds:F1} seconds.";
+                    break;
+                case DisplayTransitionOutcome.NoChange:
+                    StatusText.Text = $"{topology} topology is already active; no switch was needed.";
+                    break;
+                case DisplayTransitionOutcome.RolledBack:
+                    StatusText.Text = $"Could not verify {topology}; restored {result.PreviousTopology}.";
+                    MessageBox.Show(
+                        this,
+                        $"The requested {topology} topology could not be verified. eGPUBridge restored and verified the previous {result.PreviousTopology} topology.\n\nOperation: {result.OperationId}",
+                        "Display switch rolled back",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                    break;
+                case DisplayTransitionOutcome.Failed:
+                    StatusText.Text = $"Could not verify {topology}; the previous topology remains active.";
+                    MessageBox.Show(
+                        this,
+                        $"The requested {topology} topology could not be verified.\n\n{result.Error}\n\nOperation: {result.OperationId}",
+                        "Display switch not verified",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error);
+                    break;
+                case DisplayTransitionOutcome.RollbackFailed:
+                    StatusText.Text = "Display switch and automatic recovery could not be verified.";
+                    MessageBox.Show(
+                        this,
+                        $"The requested topology and rollback could not be verified. Use Windows display controls or the Internal only action if the screen remains usable.\n\n{result.Error}\n\nOperation: {result.OperationId}",
+                        "Display recovery needs attention",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error);
+                    break;
+                case DisplayTransitionOutcome.Busy:
+                    StatusText.Text = "Another display transition is already running.";
+                    break;
+            }
         }
         catch (Exception ex)
         {
@@ -112,16 +156,22 @@ public partial class MainWindow : Window
         }
     }
 
-    private async Task RefreshSnapshotAsyncAfterSwitch()
+    private async Task RefreshSnapshotAsyncAfterTransition()
     {
-        // SetDisplayConfig returns after Windows accepts the request. Let the UI settle,
-        // then capture evidence of the resulting state without blocking the window.
-        await Task.Delay(750);
-        var snapshot = await Task.Run(_displayService.GetSnapshot);
-        TopologyText.Text = snapshot.CurrentTopology.ToString();
-        CapturedAtText.Text = $"Updated {snapshot.CapturedAt.ToLocalTime():g}";
-        DisplaysList.ItemsSource = snapshot.Displays;
-        AdaptersList.ItemsSource = snapshot.Adapters;
+        try
+        {
+            // The coordinator already verified the transition. This refresh updates
+            // the visible details without changing the recorded operation outcome.
+            var snapshot = await Task.Run(_displayService.GetSnapshot);
+            TopologyText.Text = snapshot.CurrentTopology.ToString();
+            CapturedAtText.Text = $"Updated {snapshot.CapturedAt.ToLocalTime():g}";
+            DisplaysList.ItemsSource = snapshot.Displays;
+            AdaptersList.ItemsSource = snapshot.Adapters;
+        }
+        catch (Exception ex)
+        {
+            _logger.Error("ui.refresh.after-transition.failed", "The transition completed but the UI details could not be refreshed.", ex);
+        }
     }
 
     private void SetBusy(bool busy, string? message = null)
