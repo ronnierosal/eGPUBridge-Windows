@@ -22,7 +22,8 @@ public partial class App : System.Windows.Application
 
         var displayService = new WindowsDisplayService(_logger);
         var transitionCoordinator = new DisplayTransitionCoordinator(displayService, _logger);
-        _mainWindow = new MainWindow(displayService, transitionCoordinator, _logger);
+        var supportReportService = new SupportReportService(_logger, displayService);
+        _mainWindow = new MainWindow(displayService, transitionCoordinator, _logger, supportReportService);
         _trayIcon = new TrayIconService();
         _trayIcon.ShowRequested += ShowMainWindow;
         _trayIcon.ExitRequested += ExitApplication;

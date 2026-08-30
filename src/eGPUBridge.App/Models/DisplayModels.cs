@@ -46,7 +46,8 @@ public sealed record DisplaySnapshot(
     DateTimeOffset CapturedAt,
     DisplayTopology CurrentTopology,
     IReadOnlyList<DisplayTarget> Displays,
-    IReadOnlyList<GpuAdapter> Adapters);
+    IReadOnlyList<GpuAdapter> Adapters,
+    HardwareIdentitySnapshot HardwareIdentity);
 
 public static class DisplayConnectionClassifier
 {

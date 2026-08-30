@@ -12,9 +12,9 @@ public sealed class AppLogger : IEventLogger
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
-    public AppLogger()
+    public AppLogger(string? logDirectory = null)
     {
-        LogDirectory = Path.Combine(
+        LogDirectory = logDirectory ?? Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "eGPUBridge",
             "logs");
@@ -41,7 +41,8 @@ public sealed class AppLogger : IEventLogger
                 message,
                 data
             };
-            var line = JsonSerializer.Serialize(entry, _jsonOptions) + Environment.NewLine;
+            var raw = JsonSerializer.Serialize(entry, _jsonOptions);
+            var line = DiagnosticRedactor.RedactJson(raw, preserveDeviceInstances: true) + Environment.NewLine;
             var path = Path.Combine(LogDirectory, $"egpubridge-{DateTime.UtcNow:yyyy-MM-dd}.jsonl");
 
             lock (_writeLock)

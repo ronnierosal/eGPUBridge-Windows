@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Windows;
+using System.Windows.Interop;
 using eGPUBridge.App.Models;
 using eGPUBridge.App.Services;
 using MessageBox = System.Windows.MessageBox;
@@ -13,20 +14,29 @@ public partial class MainWindow : Window
     private readonly IDisplayService _displayService;
     private readonly DisplayTransitionCoordinator _transitionCoordinator;
     private readonly AppLogger _logger;
+    private readonly SupportReportService _supportReportService;
+    private readonly DeviceRefreshCoordinator _deviceRefreshCoordinator;
+    private DeviceNotificationService? _deviceNotificationService;
     private bool _allowClose;
     private bool _busy;
+    private bool _pendingDeviceRefresh;
 
     public MainWindow(
         IDisplayService displayService,
         DisplayTransitionCoordinator transitionCoordinator,
-        AppLogger logger)
+        AppLogger logger,
+        SupportReportService supportReportService)
     {
         _displayService = displayService;
         _transitionCoordinator = transitionCoordinator;
         _logger = logger;
+        _supportReportService = supportReportService;
+        _deviceRefreshCoordinator = new DeviceRefreshCoordinator(RefreshSnapshotAfterDeviceChangeAsync, logger);
         InitializeComponent();
         Loaded += async (_, _) => await RefreshSnapshotAsync();
+        SourceInitialized += HandleSourceInitialized;
         Closing += HandleClosing;
+        Closed += HandleClosed;
     }
 
     public void PrepareForExit() => _allowClose = true;
@@ -51,6 +61,38 @@ public partial class MainWindow : Window
         });
     }
 
+    private async void ExportSupportReportClick(object sender, RoutedEventArgs e)
+    {
+        if (_busy)
+        {
+            return;
+        }
+
+        SetBusy(true, "Creating redacted support report…");
+        try
+        {
+            var path = await Task.Run(_supportReportService.ExportRedactedReport);
+            SupportReportText.Text = $"Saved {Path.GetFileName(path)}";
+            StatusText.Text = "Redacted support report created.";
+            MessageBox.Show(
+                this,
+                $"The redacted support report was saved to:\n\n{path}",
+                "Support report created",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            _logger.Error("support.report.failed", "Could not create a support report.", ex);
+            StatusText.Text = "Support report creation failed. Details were written to the log.";
+            MessageBox.Show(this, ex.Message, "Support report failed", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            SetBusy(false);
+        }
+    }
+
     private async Task RefreshSnapshotAsync()
     {
         if (_busy)
@@ -62,10 +104,7 @@ public partial class MainWindow : Window
         try
         {
             var snapshot = await Task.Run(_displayService.GetSnapshot);
-            TopologyText.Text = snapshot.CurrentTopology.ToString();
-            CapturedAtText.Text = $"Updated {snapshot.CapturedAt.ToLocalTime():g}";
-            DisplaysList.ItemsSource = snapshot.Displays;
-            AdaptersList.ItemsSource = snapshot.Adapters;
+            RenderSnapshot(snapshot);
             StatusText.Text = $"Found {snapshot.Displays.Count} active display(s) and {snapshot.Adapters.Count} adapter(s).";
         }
         catch (Exception ex)
@@ -165,10 +204,7 @@ public partial class MainWindow : Window
             // The coordinator already verified the transition. This refresh updates
             // the visible details without changing the recorded operation outcome.
             var snapshot = await Task.Run(_displayService.GetSnapshot);
-            TopologyText.Text = snapshot.CurrentTopology.ToString();
-            CapturedAtText.Text = $"Updated {snapshot.CapturedAt.ToLocalTime():g}";
-            DisplaysList.ItemsSource = snapshot.Displays;
-            AdaptersList.ItemsSource = snapshot.Adapters;
+            RenderSnapshot(snapshot);
         }
         catch (Exception ex)
         {
@@ -183,6 +219,88 @@ public partial class MainWindow : Window
         {
             StatusText.Text = message;
         }
+
+        if (!busy && _pendingDeviceRefresh)
+        {
+            _pendingDeviceRefresh = false;
+            _deviceRefreshCoordinator.RequestRefresh();
+        }
+    }
+
+    private void HandleSourceInitialized(object? sender, EventArgs e)
+    {
+        try
+        {
+            var windowHandle = new WindowInteropHelper(this).Handle;
+            _deviceNotificationService = new DeviceNotificationService(windowHandle);
+            _deviceNotificationService.DeviceChanged += HandleDeviceChanged;
+            _logger.Info("device.monitor.started", "Monitoring display-adapter and monitor changes through Windows notifications.");
+        }
+        catch (Exception ex)
+        {
+            _logger.Error("device.monitor.failed", "Windows display-device monitoring could not be started.", ex);
+        }
+    }
+
+    private void HandleDeviceChanged(object? sender, DeviceChangeEvidence evidence) =>
+        _deviceRefreshCoordinator.Notify(evidence);
+
+    private async Task RefreshSnapshotAfterDeviceChangeAsync()
+    {
+        if (!Dispatcher.CheckAccess())
+        {
+            await Dispatcher.InvokeAsync(RefreshSnapshotAfterDeviceChangeAsync).Task.Unwrap();
+            return;
+        }
+
+        if (_busy)
+        {
+            _pendingDeviceRefresh = true;
+            _logger.Info("device.refresh.deferred", "Display refresh was deferred until the current UI operation completes.");
+            return;
+        }
+
+        SetBusy(true, "Refreshing after a Windows device change…");
+        try
+        {
+            var snapshot = await Task.Run(_displayService.GetSnapshot);
+            RenderSnapshot(snapshot);
+            StatusText.Text = $"Device change detected; found {snapshot.Displays.Count} active display(s) and {snapshot.Adapters.Count} adapter(s).";
+            _logger.Info("device.refresh.completed", "Display state was refreshed after a Windows device change.", new
+            {
+                topology = snapshot.CurrentTopology.ToString(),
+                displayCount = snapshot.Displays.Count,
+                adapterCount = snapshot.Adapters.Count
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.Error("device.refresh.failed", "Display state could not be refreshed after a Windows device change.", ex);
+            StatusText.Text = "Device change detected, but display refresh failed. Details were written to the log.";
+        }
+        finally
+        {
+            SetBusy(false);
+        }
+    }
+
+    private void RenderSnapshot(DisplaySnapshot snapshot)
+    {
+        TopologyText.Text = snapshot.CurrentTopology.ToString();
+        CapturedAtText.Text = $"Updated {snapshot.CapturedAt.ToLocalTime():g}";
+        DisplaysList.ItemsSource = snapshot.Displays;
+        AdaptersList.ItemsSource = snapshot.Adapters;
+    }
+
+    private void HandleClosed(object? sender, EventArgs e)
+    {
+        if (_deviceNotificationService is not null)
+        {
+            _deviceNotificationService.DeviceChanged -= HandleDeviceChanged;
+            _deviceNotificationService.Dispose();
+        }
+
+        _deviceRefreshCoordinator.Dispose();
     }
 
     private void HandleClosing(object? sender, CancelEventArgs e)

@@ -22,11 +22,17 @@ calls the Windows display APIs:
 
 - `GetDisplayConfigBufferSizes` and `QueryDisplayConfig` enumerate active paths.
 - `DisplayConfigGetDeviceInfo` resolves friendly monitor names.
+- `DisplayConfigGetDeviceInfo` also resolves active adapter LUIDs to Windows
+  display-adapter interface paths.
 - `EnumDisplayDevices` lists graphics adapters for diagnostics.
 - `SetDisplayConfig` applies a Windows-managed topology.
 
 The UI does not call native functions directly. This boundary allows a fake
 `IDisplayService` to be used for future UI tests.
+
+Transition polling uses the lightweight `GetCurrentTopology` method. Full
+`GetSnapshot` calls also enumerate hardware identity and are reserved for visible
+status, explicit refresh, device changes, and support reports.
 
 ### Display transition coordinator
 
@@ -44,12 +50,45 @@ start time, duration, warnings, error text, and rollback outcome. The coordinato
 owns the operation after it starts; a future optional UI client disconnect must
 not cancel verification or rollback.
 
+### Hardware identity service
+
+`HardwareIdentityService` uses read-only Configuration Manager calls to enumerate
+present display-class PnP nodes and their `GUID_DEVINTERFACE_DISPLAY_ADAPTER`
+paths. `HardwareIdentityParser` records PCI `VEN`, `DEV`, `SUBSYS`, and `REV`
+values when present. A display adapter LUID is correlated only when its Windows
+interface path exactly matches an enumerated PnP node interface path; no adapter
+is assigned a product identity from the parsed values alone.
+
+### Device awareness
+
+`DeviceNotificationService` uses the documented Windows
+[`RegisterDeviceNotification`](https://learn.microsoft.com/windows/win32/api/winuser/nf-winuser-registerdevicenotificationw)
+flow to register the WPF window for display-adapter and monitor interface
+notifications and also observes `WM_DISPLAYCHANGE`. Arrival,
+completed removal, and configuration-change messages become read-only structured
+events. It does not switch displays or issue Configuration Manager mutations.
+
+`DeviceRefreshCoordinator` debounces notification bursts and serializes refresh
+callbacks. If the UI is already applying or reading state, `MainWindow` defers the
+refresh until that operation completes. Manual Refresh remains available when a
+driver or device does not emit the expected notification.
+
 ### Logging
 
 `AppLogger` writes one JSON object per line under
 `%LOCALAPPDATA%\eGPUBridge\logs`. Each topology operation records the shared
 transition lifecycle, the native `SetDisplayConfig` result, verification, and any
-rollback attempt under one operation ID.
+rollback attempt under one operation ID. `DiagnosticRedactor` walks serialized
+JSON values before they reach disk and removes the local user profile, user and
+machine names, and network addresses while retaining the raw hardware-instance
+evidence required for local validation.
+
+`SupportReportService` captures the current display and hardware-identity snapshot
+plus at most 500 recent entries from the three newest log files. It applies
+strict export redaction, including unique monitor and PnP device-instance tails,
+while preserving PCI vendor/device/subsystem values. It writes the shareable JSON
+report under
+`%LOCALAPPDATA%\eGPUBridge\support`.
 
 ### Optional Decky Loader for Windows integration
 
@@ -83,21 +122,30 @@ Verification requires contract fixtures, a fake-core integration test for the
 loader, a real-core smoke test, controller-focus testing, and the same target
 hardware pass required by the standalone application.
 
+### Running-game guard
+
+The planned guard uses a three-state **Clear**, **Active**, or **Unknown** result
+and combines current-session process ancestry with target-LUID GPU activity when
+available. It never terminates a game, and unattended callers fail closed on
+**Active** or **Unknown**. The evidence model, privacy rules, approval boundary,
+and verification gates are defined in
+[WINDOWS_GAME_GUARD.md](WINDOWS_GAME_GUARD.md).
+
 ## Current limitations
 
 - External-only mode uses Windows' saved external topology; it does not yet select
   an exact TV target when several external displays are connected.
 - Secondary-adapter detection is a diagnostic heuristic, not GPD G1 identity.
-- There is no exact external target selection, running-game guard, device-arrival
-  watcher, saved profile, installer, auto-start, or release pipeline yet.
+- There is no exact external target selection, running-game guard, saved profile,
+  installer, auto-start, or release pipeline yet.
 - The current repository host does not have the .NET SDK, so GitHub Actions is the
   initial compilation authority.
 
-## Next design step
+## Next validation step
 
-Create a stable hardware identity from Windows Configuration Manager device nodes,
-PCI vendor/device/subsystem IDs, and the display adapter LUID. The identity must be
-captured in logs and verified before any GPD-specific behavior is enabled.
+Capture identity logs with the GPD G1 disconnected and connected, compare the raw
+PnP IDs and LUID correlations, and verify the stable evidence before any
+GPD-specific behavior is enabled.
 
 After identity is stable, follow the shared transition and diagnostic vocabulary
 in [CROSS_PLATFORM_PARITY.md](CROSS_PLATFORM_PARITY.md) so Windows and SteamOS

@@ -101,8 +101,15 @@
                     <TextBlock Margin="0,8,0,14"
                                Foreground="{StaticResource SecondaryTextBrush}"
                                TextWrapping="Wrap"
-                               Text="eGPUBridge writes structured JSON Lines logs for every display snapshot and switch request. Logs do not intentionally include account credentials." />
-                    <Button Width="180" HorizontalAlignment="Left" Click="OpenLogsClick" Content="Open log folder" />
+                               Text="Local logs retain hardware identity evidence for validation and should not be shared directly. Export creates a bounded report that redacts unique device and local identifiers." />
+                    <StackPanel Orientation="Horizontal">
+                        <Button Width="180" Click="OpenLogsClick" Content="Open log folder" />
+                        <Button Width="210" Click="ExportSupportReportClick" Content="Export redacted report" />
+                    </StackPanel>
+                    <TextBlock x:Name="SupportReportText"
+                               Margin="4,8,0,0"
+                               Foreground="{StaticResource SecondaryTextBrush}"
+                               TextWrapping="Wrap" />
                     <TextBlock Margin="0,24,0,0"
                                Foreground="#FBBF24"
                                TextWrapping="Wrap"

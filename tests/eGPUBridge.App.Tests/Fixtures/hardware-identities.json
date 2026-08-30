@@ -1,0 +1,49 @@
+{
+  "deviceNodes": [
+    {
+      "deviceInstanceId": "PCI\\VEN_1002&DEV_73DF&SUBSYS_05021002&REV_C3\\6&2A7D9E0D&0&00000019",
+      "vendorId": "1002",
+      "deviceId": "73DF",
+      "subsystemId": "05021002",
+      "revisionId": "C3",
+      "interfacePaths": [
+        "\\\\?\\PCI#VEN_1002&DEV_73DF&SUBSYS_05021002&REV_C3#6&2A7D9E0D&0&00000019#{1CA05180-A699-450A-9A0C-DE4FBE3DDD89}"
+      ]
+    },
+    {
+      "deviceInstanceId": "PCI\\VEN_8086&DEV_46A8&SUBSYS_00000000&REV_0C\\3&11583659&0&10",
+      "vendorId": "8086",
+      "deviceId": "46A8",
+      "subsystemId": "00000000",
+      "revisionId": "0C",
+      "interfacePaths": [
+        "\\\\?\\PCI#VEN_8086&DEV_46A8&SUBSYS_00000000&REV_0C#3&11583659&0&10#{1CA05180-A699-450A-9A0C-DE4FBE3DDD89}"
+      ]
+    },
+    {
+      "deviceInstanceId": "ROOT\\BASICDISPLAY\\0000",
+      "vendorId": null,
+      "deviceId": null,
+      "subsystemId": null,
+      "revisionId": null,
+      "interfacePaths": []
+    }
+  ],
+  "adapters": [
+    {
+      "luid": "00000000:0000a001",
+      "adapterDevicePath": "\\\\?\\PCI#VEN_1002&DEV_73DF&SUBSYS_05021002&REV_C3#6&2A7D9E0D&0&00000019#{1CA05180-A699-450A-9A0C-DE4FBE3DDD89}",
+      "expectedDeviceInstanceId": "PCI\\VEN_1002&DEV_73DF&SUBSYS_05021002&REV_C3\\6&2A7D9E0D&0&00000019"
+    },
+    {
+      "luid": "00000000:0000a002",
+      "adapterDevicePath": "\\\\?\\pci#ven_8086&dev_46a8&subsys_00000000&rev_0c#3&11583659&0&10#{1ca05180-a699-450a-9a0c-de4fbe3ddd89}",
+      "expectedDeviceInstanceId": "PCI\\VEN_8086&DEV_46A8&SUBSYS_00000000&REV_0C\\3&11583659&0&10"
+    },
+    {
+      "luid": "00000000:0000a003",
+      "adapterDevicePath": "\\\\?\\PCI#VEN_10DE&DEV_2684&SUBSYS_00000000&REV_A1#7&00000000&0&0000#{1CA05180-A699-450A-9A0C-DE4FBE3DDD89}",
+      "expectedDeviceInstanceId": null
+    }
+  ]
+}

@@ -177,6 +177,8 @@ public sealed class DisplayTransitionCoordinatorTests
 
         internal Exception? ApplyError { get; init; }
 
+        public DisplayTopology GetCurrentTopology() => GetSnapshot().CurrentTopology;
+
         public DisplaySnapshot GetSnapshot()
         {
             lock (_sync)
@@ -208,7 +210,12 @@ public sealed class DisplayTransitionCoordinatorTests
                 DateTimeOffset.UtcNow,
                 topology,
                 Array.Empty<DisplayTarget>(),
-                Array.Empty<GpuAdapter>());
+                Array.Empty<GpuAdapter>(),
+                new HardwareIdentitySnapshot(
+                    DateTimeOffset.UtcNow,
+                    Array.Empty<PnpDeviceIdentity>(),
+                    Array.Empty<DisplayAdapterIdentity>(),
+                    Array.Empty<string>()));
     }
 
     private sealed class FakeEventLogger : IEventLogger
