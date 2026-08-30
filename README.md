@@ -11,9 +11,19 @@ systemd implementation is not portable.
 
 - [Original eGPUBridge SteamOS/Decky plugin](https://github.com/WowOne987/eGPUBridge)
 - [Ronnie's eGPUBridge SteamOS fork](https://github.com/ronnierosal/eGPUBridge)
+- [Decky Loader for Windows](https://github.com/ronnierosal/decky-loader-windows)
 
 The two applications share the goal of making external-GPU display switching safer
 and easier, but each platform has an independent implementation and release cycle.
+Their shared terminology, safety rules, feature matrix, and implementation order
+are maintained in [the cross-platform parity contract](docs/CROSS_PLATFORM_PARITY.md).
+Any pull request that changes a user-visible workflow, status, recovery path, or
+safety gate must update the corresponding parity-matrix row and test evidence.
+
+The standalone WPF application remains the Windows core. A future Decky Loader
+for Windows integration may provide an optional Decky-style and controller-friendly
+interface, but it must call the core through a versioned local API and must not
+implement display or hardware mutations itself.
 
 ## Current starter functionality
 
