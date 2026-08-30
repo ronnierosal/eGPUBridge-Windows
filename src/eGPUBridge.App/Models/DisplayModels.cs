@@ -15,8 +15,13 @@ public enum DisplayConnectionKind
     Hdmi,
     DisplayPort,
     EmbeddedDisplayPort,
+    Lvds,
+    UdiExternal,
+    UdiEmbedded,
+    IndirectWired,
+    IndirectVirtual,
+    DisplayPortUsbTunnel,
     Internal,
-    UsbDisplay,
     Other
 }
 
@@ -49,15 +54,22 @@ public static class DisplayConnectionClassifier
     public static DisplayConnectionKind FromNativeValue(uint value) => value switch
     {
         5 => DisplayConnectionKind.Hdmi,
+        6 => DisplayConnectionKind.Lvds,
         10 => DisplayConnectionKind.DisplayPort,
         11 => DisplayConnectionKind.EmbeddedDisplayPort,
-        12 or 16 or 18 => DisplayConnectionKind.UsbDisplay,
+        12 => DisplayConnectionKind.UdiExternal,
+        13 => DisplayConnectionKind.UdiEmbedded,
+        16 => DisplayConnectionKind.IndirectWired,
+        17 => DisplayConnectionKind.IndirectVirtual,
+        18 => DisplayConnectionKind.DisplayPortUsbTunnel,
         0x80000000 => DisplayConnectionKind.Internal,
         0xFFFFFFFF => DisplayConnectionKind.Other,
         _ => DisplayConnectionKind.Unknown
     };
 
     public static bool IsInternal(DisplayConnectionKind connection) =>
-        connection is DisplayConnectionKind.Internal or DisplayConnectionKind.EmbeddedDisplayPort;
+        connection is DisplayConnectionKind.Internal
+            or DisplayConnectionKind.EmbeddedDisplayPort
+            or DisplayConnectionKind.Lvds
+            or DisplayConnectionKind.UdiEmbedded;
 }
-
