@@ -7,12 +7,20 @@ public enum DeviceChangeKind
     DisplayConfigurationChanged
 }
 
-public sealed record DeviceChangeEvidence(
-    DeviceChangeKind Kind,
-    Guid? InterfaceClassGuid,
-    string? InterfacePath,
-    DateTimeOffset ObservedAt) : EventArgs
+public sealed class DeviceChangeEvidence(
+    DeviceChangeKind kind,
+    Guid? interfaceClassGuid,
+    string? interfacePath,
+    DateTimeOffset observedAt) : EventArgs
 {
+    public DeviceChangeKind Kind { get; } = kind;
+
+    public Guid? InterfaceClassGuid { get; } = interfaceClassGuid;
+
+    public string? InterfacePath { get; } = interfacePath;
+
+    public DateTimeOffset ObservedAt { get; } = observedAt;
+
     public string EventName => Kind switch
     {
         DeviceChangeKind.Arrived => "device.arrived",
