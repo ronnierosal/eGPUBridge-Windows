@@ -75,10 +75,10 @@ public sealed class DisplayTransitionCoordinator
 
         try
         {
-            DisplaySnapshot previousSnapshot;
+            DisplayTopology previousTopology;
             try
             {
-                previousSnapshot = await Task.Run(_displayService.GetSnapshot);
+                previousTopology = await Task.Run(_displayService.GetCurrentTopology);
             }
             catch (Exception ex)
             {
@@ -90,7 +90,6 @@ public sealed class DisplayTransitionCoordinator
                 return FailedBeforeApply(operationId, requestedTopology, startedAt, stopwatch.Elapsed, ex.Message);
             }
 
-            var previousTopology = previousSnapshot.CurrentTopology;
             if (previousTopology == requestedTopology)
             {
                 _logger.Info("display.transition.skipped", "The requested display topology is already active.", new
@@ -159,7 +158,7 @@ public sealed class DisplayTransitionCoordinator
             var failure = applyError?.Message
                 ?? requestedVerification.LastError?.Message
                 ?? $"The {requestedTopology} topology was not observed after {_options.VerificationAttempts} attempts.";
-            var observedTopology = requestedVerification.LastSnapshot?.CurrentTopology ?? DisplayTopology.Unknown;
+            var observedTopology = requestedVerification.LastTopology ?? DisplayTopology.Unknown;
 
             if (observedTopology == previousTopology)
             {
@@ -254,7 +253,7 @@ public sealed class DisplayTransitionCoordinator
             var rollbackFailure = rollbackError?.Message
                 ?? rollbackVerification.LastError?.Message
                 ?? $"The previous {previousTopology} topology could not be verified after rollback.";
-            var finalTopology = rollbackVerification.LastSnapshot?.CurrentTopology ?? DisplayTopology.Unknown;
+            var finalTopology = rollbackVerification.LastTopology ?? DisplayTopology.Unknown;
             _logger.Error("display.transition.rollback.failed", "The previous display topology could not be restored and verified.", rollbackError, new
             {
                 operationId,
@@ -283,18 +282,18 @@ public sealed class DisplayTransitionCoordinator
 
     private async Task<VerificationResult> WaitForTopologyAsync(DisplayTopology expectedTopology)
     {
-        DisplaySnapshot? lastSnapshot = null;
+        DisplayTopology? lastTopology = null;
         Exception? lastError = null;
 
         for (var attempt = 0; attempt < _options.VerificationAttempts; attempt++)
         {
             try
             {
-                lastSnapshot = await Task.Run(_displayService.GetSnapshot);
+                lastTopology = await Task.Run(_displayService.GetCurrentTopology);
                 lastError = null;
-                if (lastSnapshot.CurrentTopology == expectedTopology)
+                if (lastTopology == expectedTopology)
                 {
-                    return new VerificationResult(true, lastSnapshot, null);
+                    return new VerificationResult(true, lastTopology, null);
                 }
             }
             catch (Exception ex)
@@ -308,7 +307,7 @@ public sealed class DisplayTransitionCoordinator
             }
         }
 
-        return new VerificationResult(false, lastSnapshot, lastError);
+        return new VerificationResult(false, lastTopology, lastError);
     }
 
     private static DisplayTransitionResult FailedBeforeApply(
@@ -330,7 +329,7 @@ public sealed class DisplayTransitionCoordinator
 
     private sealed record VerificationResult(
         bool Matched,
-        DisplaySnapshot? LastSnapshot,
+        DisplayTopology? LastTopology,
         Exception? LastError);
 
     private sealed class SystemTransitionDelay : ITransitionDelay

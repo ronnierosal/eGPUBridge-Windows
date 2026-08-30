@@ -48,6 +48,8 @@ public sealed class SupportReportServiceTests
 
     private sealed class FakeDisplayService : IDisplayService
     {
+        public DisplayTopology GetCurrentTopology() => DisplayTopology.Extend;
+
         public DisplaySnapshot GetSnapshot() => new(
             DateTimeOffset.UtcNow,
             DisplayTopology.Extend,

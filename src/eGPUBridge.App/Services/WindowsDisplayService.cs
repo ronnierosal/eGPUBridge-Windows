@@ -6,6 +6,13 @@ namespace eGPUBridge.App.Services;
 
 public sealed class WindowsDisplayService(IEventLogger logger) : IDisplayService
 {
+    public DisplayTopology GetCurrentTopology()
+    {
+        var paths = QueryActivePaths();
+        var displays = paths.Select(CreateDisplayTarget).ToArray();
+        return DetermineTopology(paths, displays);
+    }
+
     public DisplaySnapshot GetSnapshot()
     {
         var paths = QueryActivePaths();

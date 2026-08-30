@@ -177,6 +177,8 @@ public sealed class DisplayTransitionCoordinatorTests
 
         internal Exception? ApplyError { get; init; }
 
+        public DisplayTopology GetCurrentTopology() => GetSnapshot().CurrentTopology;
+
         public DisplaySnapshot GetSnapshot()
         {
             lock (_sync)
