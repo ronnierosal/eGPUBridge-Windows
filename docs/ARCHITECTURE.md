@@ -60,7 +60,15 @@ is assigned a product identity from the parsed values alone.
 `AppLogger` writes one JSON object per line under
 `%LOCALAPPDATA%\eGPUBridge\logs`. Each topology operation records the shared
 transition lifecycle, the native `SetDisplayConfig` result, verification, and any
-rollback attempt under one operation ID.
+rollback attempt under one operation ID. `DiagnosticRedactor` walks serialized
+JSON values before they reach disk and removes the local user profile, user and
+machine names, network addresses, and unique monitor instance segments while
+retaining useful PCI vendor/device/subsystem evidence.
+
+`SupportReportService` captures the current display and hardware-identity snapshot
+plus at most 500 recent entries from the three newest log files. It applies
+redaction again and writes a shareable JSON report under
+`%LOCALAPPDATA%\eGPUBridge\support`.
 
 ### Optional Decky Loader for Windows integration
 

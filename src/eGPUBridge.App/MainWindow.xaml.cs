@@ -13,17 +13,20 @@ public partial class MainWindow : Window
     private readonly IDisplayService _displayService;
     private readonly DisplayTransitionCoordinator _transitionCoordinator;
     private readonly AppLogger _logger;
+    private readonly SupportReportService _supportReportService;
     private bool _allowClose;
     private bool _busy;
 
     public MainWindow(
         IDisplayService displayService,
         DisplayTransitionCoordinator transitionCoordinator,
-        AppLogger logger)
+        AppLogger logger,
+        SupportReportService supportReportService)
     {
         _displayService = displayService;
         _transitionCoordinator = transitionCoordinator;
         _logger = logger;
+        _supportReportService = supportReportService;
         InitializeComponent();
         Loaded += async (_, _) => await RefreshSnapshotAsync();
         Closing += HandleClosing;
@@ -49,6 +52,38 @@ public partial class MainWindow : Window
             FileName = _logger.LogDirectory,
             UseShellExecute = true
         });
+    }
+
+    private async void ExportSupportReportClick(object sender, RoutedEventArgs e)
+    {
+        if (_busy)
+        {
+            return;
+        }
+
+        SetBusy(true, "Creating redacted support report…");
+        try
+        {
+            var path = await Task.Run(_supportReportService.ExportRedactedReport);
+            SupportReportText.Text = $"Saved {Path.GetFileName(path)}";
+            StatusText.Text = "Redacted support report created.";
+            MessageBox.Show(
+                this,
+                $"The redacted support report was saved to:\n\n{path}",
+                "Support report created",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            _logger.Error("support.report.failed", "Could not create a support report.", ex);
+            StatusText.Text = "Support report creation failed. Details were written to the log.";
+            MessageBox.Show(this, ex.Message, "Support report failed", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            SetBusy(false);
+        }
     }
 
     private async Task RefreshSnapshotAsync()

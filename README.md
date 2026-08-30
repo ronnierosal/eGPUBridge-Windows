@@ -40,8 +40,10 @@ implement display or hardware mutations itself.
 - Verifies the observed topology after every request and attempts to restore and
   verify the previous topology when the requested state cannot be confirmed.
 - Remains available in the Windows notification area when its window is closed.
-- Writes structured JSON Lines troubleshooting logs under
+- Writes identifier-redacted JSON Lines troubleshooting logs under
   `%LOCALAPPDATA%\eGPUBridge\logs`.
+- Exports a bounded, redacted JSON support report containing the current display
+  snapshot and recent structured events.
 - Runs without administrator privileges.
 
 ## Safety boundary
@@ -112,7 +114,7 @@ using it. Safe removal is not part of this starter.
    connection/removal event logging.
 3. Detect running games and require confirmation before disruptive changes.
 4. Add saved per-setup profiles keyed to exact hardware identity.
-5. Consolidate the redacted support-report branch and remote troubleshooting flow.
+5. Add remote troubleshooting instructions and supervised capture tooling.
 6. Add hot-plug status refresh and event logging before considering automation.
 7. Add an optional, versioned local API for the Windows Decky-style client only
    after the standalone transition contract is stable.
